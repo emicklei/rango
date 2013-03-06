@@ -6,6 +6,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	. "github.com/emicklei/rango/lib"
 	"os"
@@ -25,12 +26,17 @@ func init() {
 }
 
 func main() {
+	welcome()
 	loop()
+}
+
+func welcome() {
+	fmt.Println("[rango] Go ahead (.q = quit, .v = variables, .s = source, .u = undo)")
 }
 
 func loop() {
 	for {
-		fmt.Print(">")
+		fmt.Print("> ")
 		in := bufio.NewReader(os.Stdin)
 		entered, err := in.ReadString('\n')
 		if err != nil {
@@ -45,6 +51,9 @@ func loop() {
 }
 
 func dispatch(entry string) string {
+	if len(entry) == 0 {
+		return entry
+	}
 	switch {
 	case strings.HasPrefix(entry, ".v"):
 		fmt.Printf("%v\n", CollectVariables(entries))
@@ -53,10 +62,31 @@ func dispatch(entry string) string {
 		os.Exit(0)
 	case strings.HasPrefix(entry, "import "):
 		return handleImport(entry)
+	case strings.HasPrefix(entry, ".s"):
+		return handlePrintSource()
 	case isVariable(entry):
 		return handlePrintVariable(entry)
+	case strings.HasPrefix(entry, "."):
+		return handleUnknown(entry)
 	}
 	return handleStatement(entry)
+}
+
+func handlePrintSource() string {
+	var buf bytes.Buffer
+	for i, each := range entries {
+		if (Statement == each.Type || VariableDecl == each.Type) && !each.Hidden {
+			if i > 0 {
+				buf.WriteString("\n")
+			}
+			buf.WriteString(each.Source)
+		}
+	}
+	return string(buf.Bytes())
+}
+
+func handleUnknown(entry string) string {
+	return fmt.Sprintf("[rango] \"%s\": command not found", entry)
 }
 
 func handlePrintVariable(varname string) string {

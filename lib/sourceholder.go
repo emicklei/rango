@@ -16,9 +16,14 @@ type SourceHolder struct {
 	LoopCount int
 	Type      int
 	Source    string
+	Hidden    bool
 	// type data
 	ImportNames   []string
 	VariableNames []string
+}
+
+func (s *SourceHolder) Hide() {
+	s.Hidden = true
 }
 
 func NewImport(loopcount int, source string) SourceHolder {
@@ -38,14 +43,16 @@ func NewVariableDecl(loopcount int, source string) SourceHolder {
 }
 
 func NewPrint(loopcount int, source string) SourceHolder {
-	return SourceHolder{LoopCount: loopcount, Type: Print, Source: source}
+	return SourceHolder{LoopCount: loopcount, Type: Print, Source: source, Hidden: true}
 }
 
 func (s SourceHolder) AppendTo(holders []SourceHolder) []SourceHolder {
 	extended := append(holders, s)
 	if VariableDecl == s.Type {
-		useless := fmt.Sprintf("nop(%s)", s.VariableNames[0])
-		extended = append(extended, NewStatement(s.LoopCount, useless))
+		uselessSource := fmt.Sprintf("nop(%s)", s.VariableNames[0])
+		useless := NewStatement(s.LoopCount, uselessSource)
+		(&useless).Hide()
+		extended = append(extended, useless)
 	}
 	return extended
 }
