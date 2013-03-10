@@ -31,7 +31,7 @@ func main() {
 }
 
 func welcome() {
-	fmt.Println("[rango] Go ahead (.q = quit, .v = variables, .s = source, .u = undo)")
+	fmt.Println("[rango] Go ahead (.q = quit, .v = variables, .s = source, .u = undo, #<statement> = do not remember statement, .? = more help)")
 }
 
 func loop() {
@@ -66,6 +66,9 @@ func dispatch(entry string) string {
 		return handlePrintSource()
 	case isVariable(entry):
 		return handlePrintVariable(entry)
+	case strings.HasPrefix(entry, "#"):
+		// forget sources for current loopcount
+		return dispatch(entry[1:])
 	case strings.HasPrefix(entry, "."):
 		return handleUnknown(entry)
 	}
@@ -79,7 +82,7 @@ func handlePrintSource() string {
 			if i > 0 {
 				buf.WriteString("\n")
 			}
-			buf.WriteString(each.Source)
+			buf.WriteString(fmt.Sprintf("%  d:\t%s", i, each.Source))
 		}
 	}
 	return string(buf.Bytes())
