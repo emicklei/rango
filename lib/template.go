@@ -63,10 +63,15 @@ func gorun(imageName string) (string, error) {
 
 func buildTemplateVars(entries []SourceHolder) templateVars {
 	imageVars := new(templateVars)
-	for _, each := range entries {
+	for i, each := range entries {
 		switch each.Type {
 		case Import:
 			imageVars.Imports = append(imageVars.Imports, each.Source)
+		case Print:
+			// only preserve the last
+			if i == len(entries)-1 {
+				imageVars.Statements = append(imageVars.Statements, each.Source)
+			}
 		default:
 			imageVars.Statements = append(imageVars.Statements, each.Source)
 		}
@@ -82,7 +87,8 @@ type templateVars struct {
 func imageSourceTemplate() string {
 	return `package main
 import "fmt"
-{{range .Imports}}{{.}}{{end}}
+{{range .Imports}}{{.}}
+{{end}}
 func nop(v interface{}){}
 func main() {
 fmt.Print("")
