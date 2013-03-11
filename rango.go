@@ -162,7 +162,7 @@ func handleUnknownCommand(entry string) string {
 func handlePrintVariable(varname string) string {
 	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", varname)
 	addEntry(NewPrint(loopCount, printEntry))
-	return Generate_compile_run("image.go", entries)
+	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), entries)
 }
 
 // handleImport adds a non-existing import package.
