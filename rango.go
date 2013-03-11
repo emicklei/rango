@@ -22,7 +22,7 @@ const (
 
 var (
 	Stdin         *bufio.Reader
-	imageName     = "image.go"
+	imageName     = "chameleon"
 	entries       []SourceHolder
 	lastLoopCount int
 	loopCount     int
@@ -197,6 +197,6 @@ func undo(until int) {
 			break
 		}
 		// fmt.Printf("removed:%s\n", last.Source)
-		entries = entries[:.len(entries)-1]
+		entries = entries[:len(entries)-1]
 	}
 }
