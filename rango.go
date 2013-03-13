@@ -43,7 +43,8 @@ func main() {
 }
 
 func welcome() {
-	fmt.Println("[rango] (.q = quit, .v = variables, .s = source, .u = undo, #<statement> = do not remember statement, .? = more help)")
+	//	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo, #<statement> = execute once, .? = more help")
+	fmt.Println("[rango] .q = quit, .v = variables, .s = source")
 }
 
 func processChanges() {
@@ -72,6 +73,7 @@ func processChanges() {
 
 func loop() {
 	for {
+		//fmt.Printf("current loopcount:%d\n", loopCount)
 		fmt.Print("> ")
 		in := bufio.NewReader(os.Stdin)
 		entered, err := in.ReadString('\n')
@@ -94,17 +96,20 @@ func dispatch(entry string) string {
 	switch {
 	case strings.HasPrefix(entry, ".v"):
 		fmt.Printf("%v\n", CollectVariables(entries))
+		loopCount--
 		return ""
 	case strings.HasPrefix(entry, ".q"):
 		os.Exit(0)
 	case strings.HasPrefix(entry, ".s"):
+		loopCount--
 		return handlePrintSource()
 	case strings.HasPrefix(entry, ".u"):
 		return handleUndo()
 	case strings.HasPrefix(entry, "#"):
-		// forget sources for current loopcount
+		// TODO forget sources for current loopcount
 		return handleSource(entry[1:], GenerateCompileRun)
 	case strings.HasPrefix(entry, "."):
+		loopCount--
 		return handleUnknownCommand(entry)
 	case isVariable(entry):
 		return handlePrintVariable(entry)
@@ -114,7 +119,11 @@ func dispatch(entry string) string {
 
 func handleUndo() string {
 	undo(loopCount - 2) // loop already incremented
-	loopCount -= 2
+	if loopCount <= 2 {
+		loopCount = 0
+	} else {
+		loopCount -= 2
+	}
 	return handlePrintSource()
 }
 
@@ -198,6 +207,10 @@ func isVariable(entry string) bool {
 
 // undo removes entries appended
 func undo(until int) {
+	for i, each := range entries {
+		fmt.Printf("entry:%d loopcount:%d source:%s\n", i, each.LoopCount, each.Source)
+	}
+	fmt.Printf("remove all until:%d\n", until)
 	for {
 		if len(entries) == 0 {
 			break
@@ -206,7 +219,10 @@ func undo(until int) {
 		if until == last.LoopCount {
 			break
 		}
-		// fmt.Printf("removed:%s\n", last.Source)
+		fmt.Printf("removed:%s\n", last.Source)
 		entries = entries[:len(entries)-1]
+	}
+	for i, each := range entries {
+		fmt.Printf("entry:%d loopcount:%d source:%s\n", i, each.LoopCount, each.Source)
 	}
 }

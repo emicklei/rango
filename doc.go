@@ -26,6 +26,7 @@ TODO
 	function declarations
 	multi variable declarations
 	multi import declarations
+	multi statements per entry
 
 How it is made
 
