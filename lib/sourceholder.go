@@ -1,5 +1,9 @@
 package lib
 
+// Copyright 2013 Ernest Micklei. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
+
 import (
 	"fmt"
 	"strings"
@@ -52,7 +56,7 @@ func NewPrint(loopcount int, source string) SourceHolder {
 	return SourceHolder{LoopCount: loopcount, Type: Print, Source: source, Hidden: true}
 }
 
-// AppendTo adds a new SourceHolder to the collection of entries
+// AppendTo adds a new SourceHolder to the collection of entries.
 // As a side effect, it may produce additional SourceHolders based on its type.
 func (s SourceHolder) AppendTo(holders []SourceHolder) []SourceHolder {
 	extended := append(holders, s)

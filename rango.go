@@ -1,8 +1,8 @@
-package main
+// Copyright 2013 Ernest Micklei. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
 
-// Other implementation
-// go-repl
-// https://gitorious.org/golang/go-repl/blobs/master/main.go
+package main
 
 import (
 	"bufio"
@@ -143,6 +143,16 @@ func handleSource(entry string, mode int) string {
 func handlePrintSource() string {
 	var buf bytes.Buffer
 	line := 1
+	// First imports then functions then main statements
+	for _, each := range entries {
+		if (Import == each.Type) && !each.Hidden {
+			if line > 1 {
+				buf.WriteString("\n")
+			}
+			buf.WriteString(fmt.Sprintf("%  d:\t%s", line, each.Source))
+			line++
+		}
+	}
 	for _, each := range entries {
 		if (Statement == each.Type || VariableDecl == each.Type) && !each.Hidden {
 			if line > 1 {
