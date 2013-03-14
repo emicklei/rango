@@ -9,10 +9,11 @@ Install rango
 		go install ...rango
 
 Rango shell commands
-		.q(uit)	exit rango
-		.v(ars)	show all variable names
+		.q(uit)		exit rango
+		.v(ars)		show all variable names
 		.s(ource)	print the source entered since startup		
-		<name>	print a value when entered a known variable name
+		.u			undo the last entry (e.g. to fix a compiler error)
+		<name>		print a value when entered a known variable name
 
 Features
 	import declaration
@@ -20,10 +21,9 @@ Features
 
 TODO
 	function declarations
-	multi variable declarations
-	multi import declarations
+	multi variable declarations per entry
+	multi import declarations per entry
 	multi statements per entry
-	.u	undo the last entry (e.g. to fix a compiler error)
 
 How it is made
 
@@ -32,8 +32,6 @@ Successively, for each new command line entry, a new program is generated in Go,
 Any compiler error of the generated source is captured and printed by rango.
 The output (stdout and stderr) of the generated program is captured and printed by rango.
 
-
-Other known implementations:
-https://gitorious.org/golang/go-repl/blobs/master/main.go
+(c) 2013, Ernest Micklei. MIT License
 */
 package main

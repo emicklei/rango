@@ -17,8 +17,8 @@ var temporaryShellScriptName = "rangorun"
 
 // Generate_compile_run takes a list of Go source lines, create a Go program from it, compiles that source and runs that program.
 // Return the captured output from the compilation or the execution of the Go program.
-func Generate_compile_run(goSourceFile string, entries []SourceHolder) string {
-	err := generate(goSourceFile, entries)
+func Generate_compile_run(goSourceFile string, sourceLines []SourceHolder) string {
+	err := generate(goSourceFile, sourceLines)
 	if err != nil {
 		return fmt.Sprintf("[rango] generate Go source failed:%v", err)
 	}
@@ -26,11 +26,11 @@ func Generate_compile_run(goSourceFile string, entries []SourceHolder) string {
 	return output
 }
 
-// generate produces a Go source file from a list of Go code entries
-func generate(goSourceFile string, entries []SourceHolder) error {
+// generate produces a Go source file from a list of Go code sourceLines
+func generate(goSourceFile string, sourceLines []SourceHolder) error {
 	t := template.Must(template.New("image").Parse(imageSourceTemplate()))
 	var sourceBuffer bytes.Buffer
-	t.Execute(&sourceBuffer, buildTemplateVars(entries))
+	t.Execute(&sourceBuffer, buildTemplateVars(sourceLines))
 	return ioutil.WriteFile(goSourceFile, sourceBuffer.Bytes(), 0644)
 }
 
@@ -68,16 +68,16 @@ func gorun(goSourceFile string) (string, error) {
 	return string(logBytes), runError
 }
 
-// buildTemplateVars creates a templateVars struct from the list of code entries
-func buildTemplateVars(entries []SourceHolder) templateVars {
+// buildTemplateVars creates a templateVars struct from the list of code sourceLines
+func buildTemplateVars(sourceLines []SourceHolder) templateVars {
 	imageVars := new(templateVars)
-	for i, each := range entries {
+	for i, each := range sourceLines {
 		switch each.Type {
 		case Import:
 			imageVars.Imports = append(imageVars.Imports, each.Source)
 		case Print:
 			// only preserve the last
-			if i == len(entries)-1 {
+			if i == len(sourceLines)-1 {
 				imageVars.Statements = append(imageVars.Statements, each.Source)
 			}
 		default:

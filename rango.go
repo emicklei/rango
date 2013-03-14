@@ -19,16 +19,15 @@ const (
 )
 
 var (
-	Stdin         *bufio.Reader
-	imageName     = "chameleon"
-	entries       []SourceHolder
-	lastLoopCount int
-	loopCount     int
+	Stdin       *bufio.Reader
+	imageName   = "generated_by_rango"
+	sourceLines []SourceHolder
+	entryCount  int
 )
 
 func init() {
 	Stdin = bufio.NewReader(os.Stdin)
-	entries = []SourceHolder{}
+	sourceLines = []SourceHolder{}
 }
 
 func main() {
@@ -57,7 +56,6 @@ func processChanges() {
 		entered, err := in.ReadString('\n')
 		if len(entered) > 0 {
 			handleSource(strings.TrimRight(entered, "\n"), UpdateSourceOnly) // without newline
-			loopCount++
 		}
 		if err == io.EOF {
 			break
@@ -66,12 +64,12 @@ func processChanges() {
 			break
 		}
 	}
-	fmt.Printf("[rango] processed %d lines from %s\n", loopCount+1, changesName)
+	fmt.Printf("[rango] processed %d lines from %s\n", entryCount+1, changesName)
 }
 
 func loop() {
 	for {
-		//fmt.Printf("current loopcount:%d\n", loopCount)
+		//fmt.Printf("current entryCount:%d\n", entryCount)
 		fmt.Print("> ")
 		in := bufio.NewReader(os.Stdin)
 		entered, err := in.ReadString('\n')
@@ -83,7 +81,6 @@ func loop() {
 		if len(output) > 0 {
 			fmt.Println(output)
 		}
-		loopCount++
 	}
 }
 
@@ -93,21 +90,18 @@ func dispatch(entry string) string {
 	}
 	switch {
 	case strings.HasPrefix(entry, ".v"):
-		fmt.Printf("%v\n", CollectVariables(entries))
-		loopCount--
+		fmt.Printf("%v\n", CollectVariables(sourceLines))
 		return ""
 	case strings.HasPrefix(entry, ".q"):
 		os.Exit(0)
 	case strings.HasPrefix(entry, ".s"):
-		loopCount--
 		return handlePrintSource()
 	case strings.HasPrefix(entry, ".u"):
 		return handleUndo()
 	case strings.HasPrefix(entry, "#"):
-		// TODO forget sources for current loopcount
+		// TODO forget sources for current entryCount
 		return handleSource(entry[1:], GenerateCompileRun)
 	case strings.HasPrefix(entry, "."):
-		loopCount--
 		return handleUnknownCommand(entry)
 	case isVariable(entry):
 		return handlePrintVariable(entry)
@@ -116,12 +110,7 @@ func dispatch(entry string) string {
 }
 
 func handleUndo() string {
-	undo(loopCount - 2) // loop already incremented
-	if loopCount <= 2 {
-		loopCount = 0
-	} else {
-		loopCount -= 2
-	}
+	undo(entryCount)
 	return handlePrintSource()
 }
 
@@ -129,29 +118,30 @@ func handleSource(entry string, mode int) string {
 	if len(entry) == 0 {
 		return entry
 	}
+	entryCount++
 	if strings.HasPrefix(entry, "import ") {
 		return handleImport(entry)
 	}
 	if IsVariableDeclaration(entry) {
-		vardecl := NewVariableDecl(loopCount, entry)
+		vardecl := NewVariableDecl(entryCount, entry)
 		addEntry(vardecl)
 		// copied from PrintVariable
 		printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", vardecl.VariableNames[0])
-		addEntry(NewPrint(loopCount, printEntry))
+		addEntry(NewPrint(entryCount, printEntry))
 	} else {
-		addEntry(NewStatement(loopCount, entry))
+		addEntry(NewStatement(entryCount, entry))
 	}
 	if UpdateSourceOnly == mode {
 		return ""
 	}
-	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), entries)
+	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), sourceLines)
 }
 
 func handlePrintSource() string {
 	var buf bytes.Buffer
 	line := 1
 	// First imports then functions then main statements
-	for _, each := range entries {
+	for _, each := range sourceLines {
 		if (Import == each.Type) && !each.Hidden {
 			if line > 1 {
 				buf.WriteString("\n")
@@ -160,7 +150,7 @@ func handlePrintSource() string {
 			line++
 		}
 	}
-	for _, each := range entries {
+	for _, each := range sourceLines {
 		if (Statement == each.Type || VariableDecl == each.Type) && !each.Hidden {
 			if line > 1 {
 				buf.WriteString("\n")
@@ -178,24 +168,24 @@ func handleUnknownCommand(entry string) string {
 
 func handlePrintVariable(varname string) string {
 	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", varname)
-	addEntry(NewPrint(loopCount, printEntry))
-	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), entries)
+	addEntry(NewPrint(entryCount, printEntry))
+	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), sourceLines)
 }
 
 // handleImport adds a non-existing import package.
 // Source will be updated on the next statement.
 func handleImport(entry string) string {
-	entries = NewImport(loopCount, entry).AppendTo(entries)
+	sourceLines = NewImport(entryCount, entry).AppendTo(sourceLines)
 	return ""
 }
 
 func addEntry(holder SourceHolder) {
 	//fmt.Printf("%#v\n", holder)
-	entries = holder.AppendTo(entries)
+	sourceLines = holder.AppendTo(sourceLines)
 }
 
 func isVariable(entry string) bool {
-	for _, each := range entries {
+	for _, each := range sourceLines {
 		if each.IsVariable(entry) {
 			return true
 		}
@@ -203,24 +193,19 @@ func isVariable(entry string) bool {
 	return false
 }
 
-// undo removes entries appended
+// undo removes sourceLines appended
 func undo(until int) {
-	for i, each := range entries {
-		fmt.Printf("entry:%d loopcount:%d source:%s\n", i, each.LoopCount, each.Source)
-	}
-	fmt.Printf("remove all until:%d\n", until)
 	for {
-		if len(entries) == 0 {
+		if len(sourceLines) == 0 {
+			fmt.Println("(no go source)")
 			break
 		}
-		last := entries[len(entries)-1]
-		if until == last.LoopCount {
+		last := sourceLines[len(sourceLines)-1]
+		if last.EntryCount < until {
+			// set new entry count
+			entryCount = last.EntryCount
 			break
 		}
-		fmt.Printf("removed:%s\n", last.Source)
-		entries = entries[:len(entries)-1]
-	}
-	for i, each := range entries {
-		fmt.Printf("entry:%d loopcount:%d source:%s\n", i, each.LoopCount, each.Source)
+		sourceLines = sourceLines[:len(sourceLines)-1]
 	}
 }
