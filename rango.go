@@ -8,8 +8,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	// "github.com/emicklei/hopwatch"
-	. "github.com/emicklei/rango/lib"
 	"io"
 	"os"
 	"strings"

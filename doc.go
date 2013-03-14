@@ -5,17 +5,13 @@ Rango is a REPL (Read-Evaluate-Print-Loop) tool in Go for Go.
 Get the sources
 		go get -v github.com/emicklei/rango
 
-Run rango (from source)
-		go run rango.go
-
 Install rango
 		go install ...rango
 
 Rango shell commands
 		.q(uit)	exit rango
 		.v(ars)	show all variable names
-		.s(ource)	print the source entered since startup
-		.u	undo the last entry (e.g. to fix a compiler error)
+		.s(ource)	print the source entered since startup		
 		<name>	print a value when entered a known variable name
 
 Features
@@ -27,6 +23,7 @@ TODO
 	multi variable declarations
 	multi import declarations
 	multi statements per entry
+	.u	undo the last entry (e.g. to fix a compiler error)
 
 How it is made
 
