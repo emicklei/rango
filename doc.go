@@ -12,7 +12,7 @@ Rango shell commands
 		.q(uit)		exit rango
 		.v(ars)		show all variable names
 		.s(ource)	print the source entered since startup		
-		.u			undo the last entry (e.g. to fix a compiler error)
+		.u(undo)		the last entry (e.g. to fix a compiler error)
 		<name>		print a value when entered a known variable name
 
 Features

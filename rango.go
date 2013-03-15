@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 )
@@ -16,6 +15,8 @@ import (
 const (
 	GenerateCompileRun = iota
 	UpdateSourceOnly
+
+	ShowLineNumbers = true
 )
 
 var (
@@ -41,35 +42,11 @@ func main() {
 
 func welcome() {
 	//	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo, #<statement> = execute once, .? = more help")
-	fmt.Println("[rango] .q = quit, .v = variables, .s = source")
-}
-
-func processChanges() {
-	changesName := fmt.Sprintf("%s.changes", imageName)
-	file, err := os.Open(changesName)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	in := bufio.NewReader(file)
-	for {
-		entered, err := in.ReadString('\n')
-		if len(entered) > 0 {
-			handleSource(strings.TrimRight(entered, "\n"), UpdateSourceOnly) // without newline
-		}
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println("error reading file ", err)
-			break
-		}
-	}
-	fmt.Printf("[rango] processed %d lines from %s\n", entryCount+1, changesName)
+	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo")
 }
 
 func loop() {
 	for {
-		//fmt.Printf("current entryCount:%d\n", entryCount)
 		fmt.Print("> ")
 		in := bufio.NewReader(os.Stdin)
 		entered, err := in.ReadString('\n')
@@ -95,7 +72,7 @@ func dispatch(entry string) string {
 	case strings.HasPrefix(entry, ".q"):
 		os.Exit(0)
 	case strings.HasPrefix(entry, ".s"):
-		return handlePrintSource()
+		return handlePrintSource(ShowLineNumbers)
 	case strings.HasPrefix(entry, ".u"):
 		return handleUndo()
 	case strings.HasPrefix(entry, "#"):
@@ -111,7 +88,7 @@ func dispatch(entry string) string {
 
 func handleUndo() string {
 	undo(entryCount)
-	return handlePrintSource()
+	return handlePrintSource(ShowLineNumbers)
 }
 
 func handleSource(entry string, mode int) string {
@@ -134,10 +111,11 @@ func handleSource(entry string, mode int) string {
 	if UpdateSourceOnly == mode {
 		return ""
 	}
+	dumpChanges()
 	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), sourceLines)
 }
 
-func handlePrintSource() string {
+func handlePrintSource(withLineNumbers bool) string {
 	var buf bytes.Buffer
 	line := 1
 	// First imports then functions then main statements
@@ -146,7 +124,11 @@ func handlePrintSource() string {
 			if line > 1 {
 				buf.WriteString("\n")
 			}
-			buf.WriteString(fmt.Sprintf("%  d:\t%s", line, each.Source))
+			if withLineNumbers {
+				buf.WriteString(fmt.Sprintf("%  d:\t%s", line, each.Source))
+			} else {
+				buf.WriteString(each.Source)
+			}
 			line++
 		}
 	}
@@ -155,7 +137,11 @@ func handlePrintSource() string {
 			if line > 1 {
 				buf.WriteString("\n")
 			}
-			buf.WriteString(fmt.Sprintf("%  d:\t%s", line, each.Source))
+			if withLineNumbers {
+				buf.WriteString(fmt.Sprintf("%  d:\t%s", line, each.Source))
+			} else {
+				buf.WriteString(each.Source)
+			}
 			line++
 		}
 	}
@@ -180,7 +166,6 @@ func handleImport(entry string) string {
 }
 
 func addEntry(holder SourceHolder) {
-	//fmt.Printf("%#v\n", holder)
 	sourceLines = holder.AppendTo(sourceLines)
 }
 
@@ -208,4 +193,8 @@ func undo(until int) {
 		}
 		sourceLines = sourceLines[:len(sourceLines)-1]
 	}
+}
+
+func log(what string, err error) {
+	fmt.Printf("[rango] %s : %v\n", what, err)
 }
