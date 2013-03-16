@@ -5,14 +5,11 @@ Rango is a REPL (Read-Evaluate-Print-Loop) tool in Go for Go.
 Get the sources
 		go get -v github.com/emicklei/rango
 
-
 Install
 		go install ...rango
 
-
 Run
 		rango [projectname]
-
 
 Example session
 	> rango
@@ -24,14 +21,12 @@ Example session
 	> m
 	RANGO THE CHAMELEON
 
-
 Commands
 		.q(uit)		exit rango
 		.v(ars)		show all variable names
 		.s(ource)	print the source entered since startup		
 		.u(undo)	the last entry (e.g. to fix a compiler error)
 		<name>		print a value when entered a known variable name
-
 
 Features
 	import declaration
@@ -52,13 +47,14 @@ Successively, for each new command line entry, a new program is generated in Go,
 Any compiler error of the generated source is captured and printed by rango.
 The output (stdout and stderr) of the generated program is captured and printed by rango.
 
-TODO
+Todo
 
 	function, var, const, type declarations
 	multi variable declarations per entry
 	multi import declarations per entry
 	multi statements per entry
 	interpret compiler errors
+	use goreadline? for better cursor handling (up,down,complete...)
 
 (c) 2013, Ernest Micklei. MIT License
 */
