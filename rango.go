@@ -88,6 +88,7 @@ func dispatch(entry string) string {
 
 func handleUndo() string {
 	undo(entryCount)
+	dumpChanges()
 	return handlePrintSource(ShowLineNumbers)
 }
 

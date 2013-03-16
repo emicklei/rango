@@ -5,27 +5,45 @@ Rango is a REPL (Read-Evaluate-Print-Loop) tool in Go for Go.
 Get the sources
 		go get -v github.com/emicklei/rango
 
-Install rango
+
+Install
 		go install ...rango
+
 
 Run
 		rango [projectname]
 
-Rango shell commands
+
+Example session
+	> rango
+	[rango] .q = quit, .v = variables, .s = source, .u = undo
+	> m := "rango the chameleon"
+	rango the chameleon
+	> import "strings"
+	> m = strings.ToUpper(m)
+	> m
+	RANGO THE CHAMELEON
+
+
+Commands
 		.q(uit)		exit rango
 		.v(ars)		show all variable names
 		.s(ource)	print the source entered since startup		
-		.u(undo)		the last entry (e.g. to fix a compiler error)
+		.u(undo)	the last entry (e.g. to fix a compiler error)
 		<name>		print a value when entered a known variable name
+
 
 Features
 	import declaration
 	(almost) any go source that you can put inside the main() function
-	all entries are logged in a <projectname>.changes file. If such a file exists then rango will process its contents first.
+	all entries are logged in a <projectname>.changes file.
+	if a <projectname>.changes file exists then rango will process its contents first.
+
 
 Requirements
 	Installation of Go 1+ SDK
 	Because it depends on sh (e.g. bash) it only runs on a Go supported *nix OS
+
 
 How it is made
 
@@ -35,7 +53,8 @@ Any compiler error of the generated source is captured and printed by rango.
 The output (stdout and stderr) of the generated program is captured and printed by rango.
 
 TODO
-	function declarations
+
+	function, var, const, type declarations
 	multi variable declarations per entry
 	multi import declarations per entry
 	multi statements per entry
