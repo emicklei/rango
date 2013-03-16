@@ -24,6 +24,11 @@ TODO
 	multi variable declarations per entry
 	multi import declarations per entry
 	multi statements per entry
+	interpret compiler errors
+
+Requirements
+	Installation of Go 1+ SDK
+	Because it depends on sh (e.g. bash) it only runs on a Go supported *nix OS
 
 How it is made
 

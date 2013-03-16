@@ -2,6 +2,10 @@
 
 
 	go get -v github.com/emicklei/rango
+	
+	go install ...rango
+	
+	rango [projectname]
 
 [Documentation on godoc](http://godoc.org/github.com/emicklei/rango)
 
