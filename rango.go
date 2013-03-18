@@ -7,6 +7,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -16,6 +17,12 @@ const (
 	GenerateCompileRun = iota
 	UpdateSourceOnly
 
+	//  gen-com-run errors
+	GenerationError
+	CompilationError
+	ExecutionError
+	NoError
+
 	ShowLineNumbers = true
 )
 
@@ -24,25 +31,29 @@ var (
 	imageName   = "generated_by_rango"
 	sourceLines []SourceHolder
 	entryCount  int
+	// debug option
+	DEBUG = flag.Bool("debug", false, "produce more output")
 )
 
 func init() {
+	flag.Parse()
 	Stdin = bufio.NewReader(os.Stdin)
 	sourceLines = []SourceHolder{}
 }
 
 func main() {
 	welcome()
-	if len(os.Args) > 1 {
-		imageName = os.Args[1]
-		processChanges()
+	if len(os.Args) > 1 { // interpret the last arg as projectname, unless it was an option
+		imageName = os.Args[len(os.Args)-1]
+		if !strings.HasPrefix(imageName, "-") {
+			processChanges()
+		}
 	}
 	loop()
 }
 
 func welcome() {
-	//	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo, #<statement> = execute once, .? = more help")
-	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo")
+	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo, .? = help")
 }
 
 func loop() {
@@ -75,15 +86,18 @@ func dispatch(entry string) string {
 		return handlePrintSource(ShowLineNumbers)
 	case strings.HasPrefix(entry, ".u"):
 		return handleUndo()
-	case strings.HasPrefix(entry, "#"):
-		// TODO forget sources for current entryCount
-		return handleSource(entry[1:], GenerateCompileRun)
+	case strings.HasPrefix(entry, ".?"):
+		return handleHelp()
 	case strings.HasPrefix(entry, "."):
 		return handleUnknownCommand(entry)
 	case isVariable(entry):
 		return handlePrintVariable(entry)
 	}
 	return handleSource(entry, GenerateCompileRun)
+}
+
+func handleHelp() string {
+	return "[rango] .q = quit, .v = variables, .s = source, .u = undo, .? = help"
 }
 
 func handleUndo() string {
@@ -101,21 +115,52 @@ func handleSource(entry string, mode int) string {
 		return handleImport(entry)
 	}
 	if IsVariableDeclaration(entry) {
-		vardecl := NewVariableDecl(entryCount, entry)
-		addEntry(vardecl)
-		// copied from PrintVariable
-		printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", vardecl.VariableNames[0])
-		addEntry(NewPrint(entryCount, printEntry))
+		handleVariableDeclaration(entry)
 	} else {
 		addEntry(NewStatement(entryCount, entry))
 	}
 	if UpdateSourceOnly == mode {
 		return ""
 	}
-	dumpChanges()
-	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), sourceLines)
+	output, err, kind := generate_compile_run(imageName, sourceLines)
+	if err != nil {
+		// output has reason for failure
+		undo(entryCount)
+		// if compiler error that parse it to produce better output
+		if CompilationError == kind {
+			output = prepareCompilerErrorOutput(output)
+		}
+	} else {
+		dumpChanges()
+	}
+	return output
 }
 
+// handleVariableDeclaration parses the entry as a (multi) variable declaration
+// It also adds a print statement to display the value(s)
+func handleVariableDeclaration(entry string) {
+	vardecl := NewVariableDecl(entryCount, entry)
+	addEntry(vardecl)
+	// fmt.Printf( "%v,%v,%v", a , b ,c )
+	var buf bytes.Buffer
+	buf.WriteString("fmt.Printf(\"")
+	for i := 0; i < len(vardecl.VariableNames); i++ {
+		if i > 0 {
+			buf.WriteString(",")
+		}
+		buf.WriteString("%v")
+	}
+	buf.WriteString("\"")
+	for _, each := range vardecl.VariableNames {
+		buf.WriteString(",")
+		buf.WriteString(each)
+	}
+	buf.WriteString(")")
+	addEntry(NewPrint(entryCount, string(buf.Bytes())))
+}
+
+// handlePrintSource list the statements into a single string.
+// Line numbers are optional
 func handlePrintSource(withLineNumbers bool) string {
 	var buf bytes.Buffer
 	line := 1
@@ -149,14 +194,18 @@ func handlePrintSource(withLineNumbers bool) string {
 	return string(buf.Bytes())
 }
 
+// handleUnknownCommand is called when the entry did not match a known command
 func handleUnknownCommand(entry string) string {
 	return fmt.Sprintf("[rango] \"%s\": command not found", entry)
 }
 
+// handlePrintVariable adds a print statement to display the value of a variable
 func handlePrintVariable(varname string) string {
 	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", varname)
 	addEntry(NewPrint(entryCount, printEntry))
-	return Generate_compile_run(fmt.Sprintf("%s.go", imageName), sourceLines)
+	output, _, _ := generate_compile_run(imageName, sourceLines)
+	// no need to rollback entry
+	return output
 }
 
 // handleImport adds a non-existing import package.
@@ -164,6 +213,24 @@ func handlePrintVariable(varname string) string {
 func handleImport(entry string) string {
 	sourceLines = NewImport(entryCount, entry).AppendTo(sourceLines)
 	return ""
+}
+
+func prepareCompilerErrorOutput(output string) string {
+	var buf bytes.Buffer
+	lines := strings.Split(output, "\n")
+	written := false
+	for _, each := range lines {
+		if written {
+			buf.WriteString("\n")
+		}
+		if len(each) > 0 && !strings.HasPrefix(each, "#") {
+			written = true
+			// ./generated_by_rango.go:9: undefined: b
+			// TODO scan for the line number and find the matching sourceLine (first)	
+			buf.WriteString(each)
+		}
+	}
+	return string(buf.Bytes())
 }
 
 func addEntry(holder SourceHolder) {
