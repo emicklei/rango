@@ -65,7 +65,8 @@ func loop() {
 			fmt.Println(err)
 			break
 		}
-		output := dispatch(entered[:len(entered)-1]) // without newline
+		entry := strings.TrimLeft(entered[:len(entered)-1], "\t ") // without newline
+		output := dispatch(entry)
 		if len(output) > 0 {
 			fmt.Println(output)
 		}
@@ -107,16 +108,22 @@ func handleUndo() string {
 }
 
 func handleSource(entry string, mode int) string {
-	if len(entry) == 0 {
-		return entry
-	}
-	entryCount++
-	if strings.HasPrefix(entry, "import ") {
+	if strings.HasPrefix(entry, "import") {
 		return handleImport(entry)
 	}
-	if IsVariableDeclaration(entry) {
-		handleVariableDeclaration(entry)
-	} else {
+	assigned, declared, err := ParseVariables(entry)
+	if err != nil { // error is already printed
+		return ""
+	}
+	entryCount++
+	if len(assigned) > 0 {
+		handleVariableAssignments(assigned, entry)
+	}
+	if len(declared) > 0 {
+		handleVariableDeclarations(declared, entry)
+	}
+	// TODO handle mix in one entry
+	if len(assigned) == 0 && len(declared) == 0 {
 		addEntry(NewStatement(entryCount, entry))
 	}
 	if UpdateSourceOnly == mode {
@@ -136,22 +143,28 @@ func handleSource(entry string, mode int) string {
 	return output
 }
 
-// handleVariableDeclaration parses the entry as a (multi) variable declaration
-// It also adds a print statement to display the value(s)
-func handleVariableDeclaration(entry string) {
-	vardecl := NewVariableDecl(entryCount, entry)
-	addEntry(vardecl)
+func handleVariableAssignments(names []string, entry string) {
+	addEntry(NewVariableDecl(entryCount, entry, names))
+	handlePrintVariableValues(names)
+}
+func handleVariableDeclarations(names []string, entry string) {
+	fmt.Println("handleVariableDeclarations")
+	addEntry(NewVariableDecl(entryCount, entry, names))
+	handlePrintVariableValues(names)
+}
+
+func handlePrintVariableValues(names []string) {
 	// fmt.Printf( "%v,%v,%v", a , b ,c )
 	var buf bytes.Buffer
 	buf.WriteString("fmt.Printf(\"")
-	for i := 0; i < len(vardecl.VariableNames); i++ {
+	for i := 0; i < len(names); i++ {
 		if i > 0 {
 			buf.WriteString(",")
 		}
 		buf.WriteString("%v")
 	}
 	buf.WriteString("\"")
-	for _, each := range vardecl.VariableNames {
+	for _, each := range names {
 		buf.WriteString(",")
 		buf.WriteString(each)
 	}
@@ -211,7 +224,12 @@ func handlePrintVariable(varname string) string {
 // handleImport adds a non-existing import package.
 // Source will be updated on the next statement.
 func handleImport(entry string) string {
-	sourceLines = NewImport(entryCount, entry).AppendTo(sourceLines)
+	names, err := ParseImports(entry)
+	if err != nil { // error is already printed
+		return ""
+	}
+	entryCount++
+	sourceLines = NewImport(entryCount, entry, names).AppendTo(sourceLines)
 	return ""
 }
 

@@ -7,25 +7,27 @@ import (
 )
 
 // ParseVariables parse the names of variables assigned or declared in a line
-func ParseVariables(line string) (assigned []string, declared []string) {
+func ParseVariables(line string) (assigned []string, declared []string, err error) {
 	node, err := ParseStatement(line)
 	if err != nil {
-		return assigned, declared
+		log("parsing variables failed", err)
+		return assigned, declared, err
 	}
 	av := new(AstVisitor)
 	ast.Walk(av, node)
-	return av.VariablesAssigned, av.VariablesDeclared
+	return av.VariablesAssigned, av.VariablesDeclared, nil
 }
 
 // ParseImports parse the name of the packages from the import declaration in a line
-func ParseImports(line string) (imports []string) {
+func ParseImports(line string) ([]string, error) {
 	node, err := ParseImport(line)
 	if err != nil {
-		return imports
+		log("parsing imports failed", err)
+		return nil, err
 	}
 	av := new(AstVisitor)
 	ast.Walk(av, node)
-	return av.Imports
+	return av.Imports, nil
 }
 
 // AstVisitor implements a ast.Visitor and collect variable and import info

@@ -50,11 +50,9 @@ The output (stdout and stderr) of the generated program is captured and printed 
 Todo
 
 	function, var, const, type declarations
-	multi variable declarations per entry
-	multi import declarations per entry
 	multi statements per entry
 	interpret compiler errors
-	use goreadline? for better cursor handling (up,down,complete...)
+	use goreadline? termbox-go? for better cursor handling (up,down,complete...)
 
 (c) 2013, Ernest Micklei. MIT License
 */

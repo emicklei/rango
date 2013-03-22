@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 const (
@@ -24,7 +23,7 @@ type SourceHolder struct {
 	Hidden     bool   // If false then hide this from source listing
 	LineNumber int    // The exact line number in the generated Go source ; used for compiler error reporting
 	// type data
-	ImportNames   []string // If the holder is of type Import then store the packages here
+	PackageNames  []string // If the holder is of type Import then store the packages here
 	VariableNames []string // If the holder is of type VariableDecl then store the variable names here
 }
 
@@ -34,8 +33,8 @@ func (s *SourceHolder) Hide() {
 }
 
 // NewImport creates a new SourceHolder of type Import
-func NewImport(entryCount int, source string) SourceHolder {
-	return SourceHolder{EntryCount: entryCount, Type: Import, Source: source}
+func NewImport(entryCount int, source string, packageNames []string) SourceHolder {
+	return SourceHolder{EntryCount: entryCount, Type: Import, Source: source, PackageNames: packageNames}
 }
 
 // NewStatement creates a new SourceHolder of type Statement
@@ -44,12 +43,12 @@ func NewStatement(entryCount int, source string) SourceHolder {
 }
 
 // NewVariableDecl creates a new SourceHolder of type VariableDecl
-func NewVariableDecl(entryCount int, source string) SourceHolder {
+func NewVariableDecl(entryCount int, source string, names []string) SourceHolder {
 	return SourceHolder{
 		EntryCount:    entryCount,
 		Type:          VariableDecl,
 		Source:        source,
-		VariableNames: ParseVariableNames(source)}
+		VariableNames: names}
 }
 
 // NewPrint creates a new SourceHolder of type Print
@@ -83,24 +82,6 @@ func (s SourceHolder) IsVariable(entry string) bool {
 		}
 	}
 	return false
-}
-
-// IsVariableDeclaration says whether the receiver is of such type.
-func IsVariableDeclaration(source string) bool {
-	assignmentIndex := strings.Index(source, ":=")
-	return assignmentIndex > 0
-}
-
-// ParseVariableNames return a slice of var names
-func ParseVariableNames(source string) []string {
-	// TODO get rid of the quick version
-	assignmentIndex := strings.Index(source, ":=")
-	vars := strings.Split(source[0:assignmentIndex], ",")
-	names := []string{}
-	for _, each := range vars {
-		names = append(names, strings.TrimSpace(each))
-	}
-	return names
 }
 
 // CollectVariables returns the list of declared variable names entered by the user.
