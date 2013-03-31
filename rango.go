@@ -93,8 +93,6 @@ func dispatch(entry string) string {
 		return handleHelp()
 	case strings.HasPrefix(entry, "."):
 		return handleUnknownCommand(entry)
-	case IsExpressionStatement(entry):
-		return handlePrintExpressionValue(entry)
 	}
 	return handleSource(entry, GenerateCompileRun)
 }
@@ -114,6 +112,13 @@ func handleUndo() string {
 func handleSource(entry string, mode int) string {
 	if strings.HasPrefix(entry, "import") {
 		return handleImport(entry)
+	}
+	if IsExpressionStatement(entry) {
+		if GenerateCompileRun == mode {
+			return handlePrintExpressionValue(entry)
+		} else {
+			return ""
+		}
 	}
 	assigned, declared, err := ParseVariables(entry)
 	if err != nil { // error is already printed
