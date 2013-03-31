@@ -16,6 +16,7 @@ var lines = []struct {
 	{"c,d = 3,4", []string{"c", "d"}, []string{}},
 	{"var ( a = 'a' ; b int ) ", []string{}, []string{"a", "b"}},
 	{"fmt.Println(\"here\")", []string{}, []string{}},
+	{"1+2", []string{}, []string{}},
 }
 
 func TestParseVariables(t *testing.T) {

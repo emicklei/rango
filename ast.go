@@ -6,6 +6,17 @@ import (
 	"go/token"
 )
 
+func IsExpressionStatement(line string) bool {
+	node, err := ParseStatement(line)
+	if err != nil {
+		log("parsing variables failed", err)
+		return false
+	}
+	av := new(AstVisitor)
+	ast.Walk(av, node)
+	return av.IsExpression
+}
+
 // ParseVariables parse the names of variables assigned or declared in a line
 func ParseVariables(line string) (assigned []string, declared []string, err error) {
 	node, err := ParseStatement(line)
@@ -35,6 +46,7 @@ type AstVisitor struct {
 	VariablesAssigned []string
 	VariablesDeclared []string
 	Imports           []string
+	IsExpression      bool
 }
 
 // Visit inspects the type of a Node to detect a Assignment, Declaration or Import
@@ -52,6 +64,8 @@ func (av *AstVisitor) Visit(node ast.Node) ast.Visitor {
 		}
 	case *ast.ImportSpec:
 		av.Imports = append(av.Imports, node.(*ast.ImportSpec).Path.Value)
+	case *ast.ExprStmt:
+		av.IsExpression = true
 	}
 	return av
 }

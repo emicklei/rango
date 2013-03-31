@@ -31,6 +31,7 @@ var (
 	imageName   = "generated_by_rango"
 	sourceLines []SourceHolder
 	entryCount  int
+	logChanges  = false
 	// debug option
 	DEBUG = flag.Bool("debug", false, "produce more output")
 )
@@ -47,6 +48,7 @@ func main() {
 		imageName = os.Args[len(os.Args)-1]
 		if !strings.HasPrefix(imageName, "-") {
 			processChanges()
+			logChanges = true
 		}
 	}
 	loop()
@@ -65,7 +67,7 @@ func loop() {
 			fmt.Println(err)
 			break
 		}
-		entry := strings.TrimLeft(entered[:len(entered)-1], "\t ") // without newline
+		entry := strings.TrimLeft(entered[:len(entered)-1], "\t ") // without tabs,spaces and newline
 		output := dispatch(entry)
 		if len(output) > 0 {
 			fmt.Println(output)
@@ -91,8 +93,8 @@ func dispatch(entry string) string {
 		return handleHelp()
 	case strings.HasPrefix(entry, "."):
 		return handleUnknownCommand(entry)
-	case isVariable(entry):
-		return handlePrintVariable(entry)
+	case IsExpressionStatement(entry):
+		return handlePrintExpressionValue(entry)
 	}
 	return handleSource(entry, GenerateCompileRun)
 }
@@ -103,7 +105,9 @@ func handleHelp() string {
 
 func handleUndo() string {
 	undo(entryCount)
-	dumpChanges()
+	if logChanges {
+		dumpChanges()
+	}
 	return handlePrintSource(ShowLineNumbers)
 }
 
@@ -133,22 +137,36 @@ func handleSource(entry string, mode int) string {
 	if err != nil {
 		// output has reason for failure
 		undo(entryCount)
-		// if compiler error that parse it to produce better output
+		// if compiler error then parse it to produce better output
 		if CompilationError == kind {
 			output = prepareCompilerErrorOutput(output)
 		}
 	} else {
-		dumpChanges()
+		if logChanges {
+			dumpChanges()
+		}
 	}
 	return output
 }
 
 func handleVariableAssignments(names []string, entry string) {
-	addEntry(NewVariableDecl(entryCount, entry, names))
+	// detect if assign+decl
+	areAssignmentsOnly := true
+	for _, each := range names {
+		if !isVariable(each) {
+			areAssignmentsOnly = false
+			break
+		}
+	}
+	if areAssignmentsOnly {
+		addEntry(NewVariableAssign(entryCount, entry, names))
+	} else {
+		// it is a combi, handle as decl
+		addEntry(NewVariableDecl(entryCount, entry, names))
+	}
 	handlePrintVariableValues(names)
 }
 func handleVariableDeclarations(names []string, entry string) {
-	fmt.Println("handleVariableDeclarations")
 	addEntry(NewVariableDecl(entryCount, entry, names))
 	handlePrintVariableValues(names)
 }
@@ -192,7 +210,9 @@ func handlePrintSource(withLineNumbers bool) string {
 		}
 	}
 	for _, each := range sourceLines {
-		if (Statement == each.Type || VariableDecl == each.Type) && !each.Hidden {
+		if (Statement == each.Type ||
+			VariableDecl == each.Type ||
+			VariableAssign == each.Type) && !each.Hidden {
 			if line > 1 {
 				buf.WriteString("\n")
 			}
@@ -212,9 +232,9 @@ func handleUnknownCommand(entry string) string {
 	return fmt.Sprintf("[rango] \"%s\": command not found", entry)
 }
 
-// handlePrintVariable adds a print statement to display the value of a variable
-func handlePrintVariable(varname string) string {
-	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", varname)
+// handlePrintExpressionValue adds a print statement to display the value of an expression
+func handlePrintExpressionValue(expression string) string {
+	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", expression)
 	addEntry(NewPrint(entryCount, printEntry))
 	output, _, _ := generate_compile_run(imageName, sourceLines)
 	// no need to rollback entry

@@ -14,26 +14,27 @@ Run
 Example session
 	> rango
 	[rango] .q = quit, .v = variables, .s = source, .u = undo
-	> m := "rango the chameleon"
-	rango the chameleon
+	> m,y := "rango the chameleon", 2012
+	rango the chameleon,2012
 	> import "strings"
 	> m = strings.ToUpper(m)
-	> m
 	RANGO THE CHAMELEON
+	> y+1
+	2013
 
 Commands
 		.q(uit)		exit rango
 		.v(ars)		show all variable names
 		.s(ource)	print the source entered since startup		
-		.u(undo)	the last entry (e.g. to fix a compiler error)
-		<name>		print a value when entered a known variable name
+		.u(undo)	the last entry
+		<expression>		print a value when entered an expression
 
 Features
 	import declaration
 	(almost) any go source that you can put inside the main() function
-	all entries are logged in a <projectname>.changes file.
-	if a <projectname>.changes file exists then rango will process its contents first.
-
+	if <projectname> is given on startup then
+		if a <projectname>.changes file exists then rango will process its contents first.
+		all entries are logged in a <projectname>.changes file.
 
 Requirements
 	Installation of Go 1+ SDK
@@ -49,9 +50,7 @@ The output (stdout and stderr) of the generated program is captured and printed 
 
 Todo
 
-	function, var, const, type declarations
-	multi statements per entry
-	interpret compiler errors
+	interpret compiler errors and translate line numbers
 	use goreadline? termbox-go? for better cursor handling (up,down,complete...)
 
 (c) 2013, Ernest Micklei. MIT License

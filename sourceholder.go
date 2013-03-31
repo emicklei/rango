@@ -12,6 +12,7 @@ const (
 	Import = iota
 	Statement
 	VariableDecl
+	VariableAssign
 	Print
 )
 
@@ -47,6 +48,15 @@ func NewVariableDecl(entryCount int, source string, names []string) SourceHolder
 	return SourceHolder{
 		EntryCount:    entryCount,
 		Type:          VariableDecl,
+		Source:        source,
+		VariableNames: names}
+}
+
+// NewVariableAssign creates a new SourceHolder of type VariableAssign
+func NewVariableAssign(entryCount int, source string, names []string) SourceHolder {
+	return SourceHolder{
+		EntryCount:    entryCount,
+		Type:          VariableAssign,
 		Source:        source,
 		VariableNames: names}
 }
@@ -89,7 +99,7 @@ func CollectVariables(sourceLines []SourceHolder) []string {
 	names := []string{}
 	for _, each := range sourceLines {
 		if VariableDecl == each.Type {
-			names = append(names, each.VariableNames[0])
+			names = append(names, each.VariableNames...)
 		}
 	}
 	return names
