@@ -13,13 +13,15 @@ Run
 
 Example session
 	> rango
-	[rango] .q = quit, .v = variables, .s = source, .u = undo
+	[rango] .q = quit, .v = variables, .s = source, .u = undo, !<source> = eval once , =<source> = print once
 	> m,y := "rango the chameleon", 2012
 	rango the chameleon,2012
 	> import "strings"
 	> m = strings.ToUpper(m)
 	RANGO THE CHAMELEON
-	> y+1
+	> !print(y+1)
+	2013
+	> =y+1
 	2013
 
 Commands
@@ -27,7 +29,7 @@ Commands
 		.v(ars)		show all variable names
 		.s(ource)	print the source entered since startup		
 		.u(undo)	the last entry
-		<expression>		print a value when entered an expression
+		!<source>		execute this source only once
 
 Features
 	import declaration

@@ -91,6 +91,16 @@ func dispatch(entry string) string {
 		return handleUndo()
 	case strings.HasPrefix(entry, ".?"):
 		return handleHelp()
+	case strings.HasPrefix(entry, "="):
+		return handlePrintExpressionValue(entry[1:])
+	case strings.HasPrefix(entry, "!"):
+		wantsLog := logChanges
+		logChanges = false
+		out := handleSource(entry[1:], GenerateCompileRun)
+		undo(entryCount)
+		logChanges = wantsLog
+		// TODO if handleSource failed then undo is done twice =>  Need (string,error) return values!
+		return out
 	case strings.HasPrefix(entry, "."):
 		return handleUnknownCommand(entry)
 	}
@@ -113,13 +123,20 @@ func handleSource(entry string, mode int) string {
 	if strings.HasPrefix(entry, "import") {
 		return handleImport(entry)
 	}
-	if IsExpressionStatement(entry) {
+	if isVariable(entry) {
 		if GenerateCompileRun == mode {
 			return handlePrintExpressionValue(entry)
 		} else {
 			return ""
 		}
 	}
+	//if IsExpressionStatement(entry) {
+	//	if GenerateCompileRun == mode {
+	//		return handlePrintExpressionValue(entry)
+	//	} else {
+	//		return ""
+	//	}
+	//}
 	assigned, declared, err := ParseVariables(entry)
 	if err != nil { // error is already printed
 		return ""
