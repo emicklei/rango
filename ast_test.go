@@ -10,13 +10,14 @@ var lines = []struct {
 	line     string
 	assigned []string
 	declared []string
+	isexpr   bool
 }{
-	{"a := 1", []string{"a"}, []string{}},
-	{"b = 2", []string{"b"}, []string{}},
-	{"c,d = 3,4", []string{"c", "d"}, []string{}},
-	{"var ( a = 'a' ; b int ) ", []string{}, []string{"a", "b"}},
-	{"fmt.Println(\"here\")", []string{}, []string{}},
-	{"1+2", []string{}, []string{}},
+	{"a := 1", []string{"a"}, []string{}, false},
+	{"b = 2", []string{"b"}, []string{}, false},
+	{"c,d = 3,4", []string{"c", "d"}, []string{}, false},
+	{"var ( a = 'a' ; b int ) ", []string{}, []string{"a", "b"}, false},
+	{"fmt.Println(\"here\")", []string{}, []string{}, true},
+	{"1+2", []string{}, []string{}, true},
 }
 
 func TestParseVariables(t *testing.T) {
@@ -34,6 +35,9 @@ func TestParseVariables(t *testing.T) {
 			t.Fatal("i=", i)
 		}
 		if !equal(each.declared, av.VariablesDeclared) {
+			t.Fatal("i=", i)
+		}
+		if each.isexpr != av.IsExpression {
 			t.Fatal("i=", i)
 		}
 	}

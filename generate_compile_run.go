@@ -126,6 +126,9 @@ func imageSourceTemplate() string {
 import "fmt"
 {{range .Imports}}{{.Source}} 			// {{.LineNumber}}
 {{end}}
+func rango_first(value ...interface{}) (interface{}) {
+	return value[0]
+}
 func main() {
 fmt.Print("")
 {{range .Statements}}{{.Source}} 		// {{.LineNumber}}

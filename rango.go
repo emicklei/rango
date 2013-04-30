@@ -239,7 +239,7 @@ func handleUnknownCommand(entry string) string {
 
 // handlePrintExpressionValue adds a print statement to display the value of an expression
 func handlePrintExpressionValue(expression string) string {
-	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",%s)", expression)
+	printEntry := fmt.Sprintf("fmt.Printf(\"%%v\",rango_first(%s))", expression)
 	addEntry(NewPrint(entryCount, printEntry))
 	output, _, _ := generate_compile_run(imageName, sourceLines)
 	// no need to rollback entry
