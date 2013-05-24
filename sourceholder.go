@@ -21,7 +21,7 @@ type SourceHolder struct {
 	EntryCount int    // In which REPL count was this created
 	Type       int    // one of the constants Import,...
 	Source     string // Go code entered or hidden code produced by rango
-	Hidden     bool   // If false then hide this from source listing
+	Hidden     bool   // If true then hide this from source listing
 	LineNumber int    // The exact line number in the generated Go source ; used for compiler error reporting
 	// type data
 	PackageNames  []string // If the holder is of type Import then store the packages here

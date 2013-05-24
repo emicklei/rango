@@ -55,7 +55,7 @@ func main() {
 }
 
 func welcome() {
-	fmt.Println("[rango] .q = quit, .v = variables, .s = source, .u = undo, .? = help")
+	fmt.Println(handleHelp())
 }
 
 func loop() {
@@ -108,7 +108,7 @@ func dispatch(entry string) string {
 }
 
 func handleHelp() string {
-	return "[rango] .q = quit, .v = variables, .s = source, .u = undo, .? = help"
+	return "[rango] .q = quit, !<source> = eval once , =<source> = print once, .v = variables, .s = source, .u = undo, .? = help"
 }
 
 func handleUndo() string {
@@ -130,13 +130,6 @@ func handleSource(entry string, mode int) string {
 			return ""
 		}
 	}
-	//if IsExpressionStatement(entry) {
-	//	if GenerateCompileRun == mode {
-	//		return handlePrintExpressionValue(entry)
-	//	} else {
-	//		return ""
-	//	}
-	//}
 	assigned, declared, err := ParseVariables(entry)
 	if err != nil { // error is already printed
 		return ""
@@ -286,7 +279,7 @@ func prepareCompilerErrorOutput(output string) string {
 		if len(each) > 0 && !strings.HasPrefix(each, "#") {
 			written = true
 			// ./generated_by_rango.go:9: undefined: b
-			// TODO scan for the line number and find the matching sourceLine (first)	
+			// TODO scan for the line number and find the matching sourceLine (first)
 			buf.WriteString(each)
 		}
 	}
