@@ -58,23 +58,6 @@ func welcome() {
 	fmt.Println(handleHelp())
 }
 
-func loop() {
-	for {
-		fmt.Print("> ")
-		in := bufio.NewReader(os.Stdin)
-		entered, err := in.ReadString('\n')
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
-		entry := strings.TrimLeft(entered[:len(entered)-1], "\t ") // without tabs,spaces and newline
-		output := dispatch(entry)
-		if len(output) > 0 {
-			fmt.Println(output)
-		}
-	}
-}
-
 func dispatch(entry string) string {
 	if len(entry) == 0 {
 		return entry

@@ -58,8 +58,11 @@ func (av *AstVisitor) Visit(node ast.Node) ast.Visitor {
 		}
 	case *ast.DeclStmt:
 		for _, each := range node.(*ast.DeclStmt).Decl.(*ast.GenDecl).Specs {
-			for _, other := range each.(*ast.ValueSpec).Names {
-				av.VariablesDeclared = append(av.VariablesDeclared, other.Name)
+			valueSpec, ok := each.(*ast.ValueSpec)
+			if ok {
+				for _, other := range valueSpec.Names {
+					av.VariablesDeclared = append(av.VariablesDeclared, other.Name)
+				}
 			}
 		}
 	case *ast.ImportSpec:
